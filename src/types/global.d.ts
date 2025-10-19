@@ -67,10 +67,29 @@ declare global {
         intro: string;
     };
 
+    type NewsSummaryEmailData = {
+        email: string;
+        name?: string;
+        /** HTML or plain text summary produced by the summarizer */
+        newsContent: string;
+        /** optional date string to render in the template; if omitted the sender may fill it */
+        date?: string;
+    };
+
     type User = {
         id: string;
         name: string;
         email: string;
+    };
+
+    type UserForNewsEmail = {
+        id?: string;
+        email: string;
+        name?: string;
+        country?: string;
+        investmentGoals?: string;
+        riskTolerance?: string;
+        preferredIndustry?: string;
     };
 
     type Stock = {
