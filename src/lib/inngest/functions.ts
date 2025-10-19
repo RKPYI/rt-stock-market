@@ -84,33 +84,31 @@ export const sendDailyNewsSummary = inngest.createFunction(
         const userNewsSummaries: { user: UserForNewsEmail; newsContent: string | null}[] = [];
 
         for (const { user, articles } of results) {
-            await step.run(`summarize-news-${user.email}`, async () => {
-                try {
-                    const prompt = NEWS_SUMMARY_EMAIL_PROMPT.replace('{{newsData}}', JSON.stringify(articles, null, 2));
+            try {
+                const prompt = NEWS_SUMMARY_EMAIL_PROMPT.replace('{{newsData}}', JSON.stringify(articles, null, 2));
 
-                    const response = await step.ai.infer('generate-summary', {
-                        model: step.ai.models.gemini({ model: 'gemini-2.5-flash-lite' }),
-                        body: {
-                            contents: [
-                                {
-                                    role: 'user',
-                                    parts: [
-                                        { text: prompt }
-                                    ]
-                                }
-                            ]
-                        }
-                    });
+                const response = await step.ai.infer(`summarize-news-${user.email}`, {
+                    model: step.ai.models.gemini({ model: 'gemini-2.5-flash-lite' }),
+                    body: {
+                        contents: [
+                            {
+                                role: 'user',
+                                parts: [
+                                    { text: prompt }
+                                ]
+                            }
+                        ]
+                    }
+                });
 
-                    const part = response.candidates?.[0]?.content?.parts?.[0];
-                    const newsContent = (part && 'text' in part ? part.text : null) || 'No market news.';
+                const part = response.candidates?.[0]?.content?.parts?.[0];
+                const newsContent = (part && 'text' in part ? part.text : null) || 'No market news.';
 
-                    return { user, newsContent };
-                } catch (e) {
-                    console.error('Failed to summarize news for: ', user.email);
-                    return { user, newsContent: null };
-                }
-            }).then(result => userNewsSummaries.push(result));
+                userNewsSummaries.push({ user, newsContent });
+            } catch (e) {
+                console.error('Failed to summarize news for: ', user.email);
+                userNewsSummaries.push({ user, newsContent: null });
+            }
         }
 
         // Step #4: Send the emails
